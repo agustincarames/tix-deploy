@@ -22,7 +22,7 @@ CREATE TABLE provider (
 CREATE TABLE location (
 	id integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
 	name varchar(255) NOT NULL,
-	publickey varchar(500) NOT NULL,
+	publickey text NOT NULL,
 	enabled boolean NOT NULL,
 	user_id integer NOT NULL REFERENCES user(id),
 	created_at datetime NOT NULL,

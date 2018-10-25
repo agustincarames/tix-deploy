@@ -4,52 +4,56 @@ services:
   # API
   mysql:
     image: mysql:5.7
-    container_name: test-mysql
-    ports:
-      - 6603:3306
-    env_file: tix.env
+    env_file: mysql_secret.env
     volumes:
-      - /storage/docker/mysql-datadir:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
       - ./create-tables.sql:/docker-entrypoint-initdb.d/create-tables.sql
 
   tix-api:
-    image: "${TIX_IMAGE_SOURCE}/tix-api"
+    image: "${TIX_IMAGE_API}"
+    environment:
+      - TIX_API_PUBLIC_URL=${TIX_API_PUBLIC_HOST}
     ports:
-      - "3001:3001/tcp"
+      - "${TIX_API_PUBLIC_PORT}:3001/tcp"
     links:
       - mysql
 
   tix-ip-to-as:
-    image: "${TIX_IMAGE_SOURCE}/tix-ip-to-as"
+    image: "${TIX_IMAGE_IPTOAS}"
     links:
       - mysql
     volumes:
-      - /storage/docker/iptoas-datadir:/root/iptoas/files
+      - iptoas-data:/root/iptoas/files
 
+  # Web
   tix-web:
-    image: "${TIX_IMAGE_SOURCE}/tix-web"
+    image: "${TIX_IMAGE_WEB}"
     ports:
-      - "3000:3000/tcp"
-    env_file: tix.env
+      - "${TIX_WEB_PUBLIC_PORT}:3000/tcp"
+    environment:
+      - TIX_WEB_HOST=${TIX_WEB_PUBLIC_HOST}
+      - TIX_WEB_PORT=${TIX_WEB_PUBLIC_PORT}
 
   # Time
   rabbitmq:
     image: "rabbitmq:3.6.12-management-alpine"
-    hostname: "tix-time-rabbitmq"
-    env_file: tix.env
-    ports:
-      - "127.0.0.1:15673:15672"
-      - "127.0.0.1:5672:5672"
+    env_file: rabbitmq_secret.env
+    environment:
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
+      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
     expose:
       - "5672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
 
   tix-time-server:
-    image: "${TIX_IMAGE_SOURCE}/tix-time-server"
-    env_file: tix.env
+    image: "${TIX_IMAGE_TIME_SERVER}"
+    env_file:
+      - rabbitmq_secret.env
     environment:
       - TIX__ENVIRONMENT=stage
+      - TIX__LOG_LEVEL=INFO
+      - TIX__QUEUE__HOST=${TIX_RABBITMQ_HOST}
     ports:
       - "4500:4500/udp"
       - "127.0.0.1:18080:8080"
@@ -58,10 +62,16 @@ services:
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
 
   tix-time-condenser:
-    image: "${TIX_IMAGE_SOURCE}/tix-time-condenser"
-    env_file: tix.env
+    image: "${TIX_IMAGE_TIME_CONDENSER}"
+    env_file:
+      - rabbitmq_secret.env
+      - api_secret.env
     environment:
       - SPRING_PROFILES_ACTIVE=staging
+      - SPRING_RABBITMQ_HOST=${TIX_RABBITMQ_HOST}
+      - TIX_CONDENSER_TIX_API_HTTPS=${TIX_API_PUBLIC_SSL}
+      - TIX_CONDENSER_TIX_API_HOST=${TIX_API_HOST}
+      - TIX_CONDENSER_TIX_API_PORT=${TIX_API_PUBLIC_PORT}
     volumes:
       - reports-data:/tmp/reports
     links:
@@ -69,10 +79,12 @@ services:
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
 
   tix-time-processor-beat:
-    image: "${TIX_IMAGE_SOURCE}/tix-time-processor"
-    env_file: tix.env
+    image: "${TIX_IMAGE_TIME_PROCESSOR}"
+    env_file:
+      - rabbitmq_secret.env
     environment:
       - PROCESSOR_TYPE=BEAT
+      - TIX_RABBITMQ_HOST=${TIX_RABBITMQ_HOST}
     volumes:
       - celery-scheduler-data:/tmp/celerybeat-schedule.d
     links:
@@ -80,10 +92,15 @@ services:
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
     
   tix-time-processor-worker:
-    image: "${TIX_IMAGE_SOURCE}/tix-time-processor"
-    env_file: tix.env
+    image: "${TIX_IMAGE_TIME_PROCESSOR}"
+    env_file:
+      - api_secret.env
+      - rabbitmq_secret.env
     environment:
       - PROCESSOR_TYPE=WORKER
+      - TIX_RABBITMQ_HOST=${TIX_RABBITMQ_HOST}
+      - TIX_API_SSL=${TIX_API_PUBLIC_SSL}
+      - TIX_API_HOST=${TIX_API_HOST}
     volumes:
       - reports-data:/tmp/reports
       - celery-scheduler-data:/tmp/celerybeat-schedule.d
@@ -92,6 +109,23 @@ services:
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
 
 volumes:
-  reports-data:
   celery-scheduler-data:
   rabbitmq-data:
+
+  mysql-data:
+    driver: local
+    driver_opts:
+      device: ${TIX_MYSQL_VOLUME_ROOT}
+      o: bind
+
+  iptoas-data:
+    driver: local
+    driver_opts:
+      device: ${TIX_IPTOAS_VOLUME_ROOT}
+      o: bind
+
+  reports-data:
+    driver: local
+    driver_opts:
+      device: ${TIX_REPORTS_VOLUME_ROOT}
+      o: bind
