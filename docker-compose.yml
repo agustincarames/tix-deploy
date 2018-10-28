@@ -111,21 +111,6 @@ services:
 volumes:
   celery-scheduler-data:
   rabbitmq-data:
-
   mysql-data:
-    driver: local
-    driver_opts:
-      device: ${TIX_MYSQL_VOLUME_ROOT}
-      o: bind
-
   iptoas-data:
-    driver: local
-    driver_opts:
-      device: ${TIX_IPTOAS_VOLUME_ROOT}
-      o: bind
-
   reports-data:
-    driver: local
-    driver_opts:
-      device: ${TIX_REPORTS_VOLUME_ROOT}
-      o: bind
