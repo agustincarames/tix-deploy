@@ -65,13 +65,12 @@ services:
     image: "${TIX_IMAGE_TIME_CONDENSER}"
     env_file:
       - rabbitmq_secret.env
-      - api_secret.env
     environment:
       - SPRING_PROFILES_ACTIVE=staging
       - SPRING_RABBITMQ_HOST=${TIX_RABBITMQ_HOST}
-      - TIX_CONDENSER_TIX_API_HTTPS=${TIX_API_PUBLIC_SSL}
-      - TIX_CONDENSER_TIX_API_HOST=${TIX_API_HOST}
-      - TIX_CONDENSER_TIX_API_PORT=${TIX_API_PUBLIC_PORT}
+      - TIX_CONDENSER_TIX_API_HTTPS=${TIX_API_INTERNAL_SSL}
+      - TIX_CONDENSER_TIX_API_HOST=${TIX_API_INTERNAL_HOST}
+      - TIX_CONDENSER_TIX_API_PORT=${TIX_API_INTERNAL_PORT}
     volumes:
       - reports-data:/tmp/reports
     links:
@@ -94,13 +93,13 @@ services:
   tix-time-processor-worker:
     image: "${TIX_IMAGE_TIME_PROCESSOR}"
     env_file:
-      - api_secret.env
       - rabbitmq_secret.env
     environment:
       - PROCESSOR_TYPE=WORKER
       - TIX_RABBITMQ_HOST=${TIX_RABBITMQ_HOST}
-      - TIX_API_SSL=${TIX_API_PUBLIC_SSL}
-      - TIX_API_HOST=${TIX_API_HOST}
+      - TIX_API_SSL=${TIX_API_INTERNAL_SSL}
+      - TIX_API_HOST=${TIX_API_INTERNAL_HOST}
+      - TIX_API_PORT=${TIX_API_INTERNAL_PORT}
     volumes:
       - reports-data:/tmp/reports
       - celery-scheduler-data:/tmp/celerybeat-schedule.d
