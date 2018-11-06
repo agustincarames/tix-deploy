@@ -33,6 +33,8 @@ services:
     environment:
       - TIX_WEB_HOST=${TIX_WEB_PUBLIC_HOST}
       - TIX_WEB_PORT=${TIX_WEB_PUBLIC_PORT}
+      - TIX_WEB_API_URL=http://${TIX_API_PUBLIC_HOST}:${TIX_API_PUBLIC_PORT}/api
+    command: ["./run.sh"]
 
   # Time
   rabbitmq:
