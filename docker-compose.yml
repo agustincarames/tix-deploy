@@ -4,7 +4,11 @@ services:
   # API
   mysql:
     image: mysql:5.7
-    env_file: mysql_secret.env
+    env_file:
+      - mysql_secret.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${TIX_MYSQL_DATABASE}
     volumes:
       - mysql-data:/var/lib/mysql
       - ./create-tables.sql:/docker-entrypoint-initdb.d/create-tables.sql
@@ -15,12 +19,16 @@ services:
       TIX_API_PUBLIC_URL: ${TIX_API_PUBLIC_HOST}
     ports:
       - "${TIX_API_PUBLIC_PORT}:3001/tcp"
-      - "3002:3002/tcp"
     links:
       - mysql
 
   tix-ip-to-as:
     image: "${TIX_IMAGE_IPTOAS}"
+    env_file:
+      - mysql_secret.env
+    environment:
+      MYSQL_DATABASE: ${TIX_MYSQL_DATABASE}
+      MYSQL_HOST: ${TIX_MYSQL_HOST}
     links:
       - mysql
     volumes:
