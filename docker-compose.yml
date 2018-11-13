@@ -12,9 +12,10 @@ services:
   tix-api:
     image: "${TIX_IMAGE_API}"
     environment:
-      - TIX_API_PUBLIC_URL=${TIX_API_PUBLIC_HOST}
+      TIX_API_PUBLIC_URL: ${TIX_API_PUBLIC_HOST}
     ports:
       - "${TIX_API_PUBLIC_PORT}:3001/tcp"
+      - "3002:3002/tcp"
     links:
       - mysql
 
@@ -31,18 +32,19 @@ services:
     ports:
       - "${TIX_WEB_PUBLIC_PORT}:3000/tcp"
     environment:
-      - TIX_WEB_HOST=${TIX_WEB_PUBLIC_HOST}
-      - TIX_WEB_PORT=${TIX_WEB_PUBLIC_PORT}
-      - TIX_WEB_API_URL=http://${TIX_API_PUBLIC_HOST}:${TIX_API_PUBLIC_PORT}/api
+      TIX_WEB_HOST: ${TIX_WEB_PUBLIC_HOST}
+      TIX_WEB_PORT: ${TIX_WEB_PUBLIC_PORT}
+      TIX_WEB_API_URL: http://${TIX_API_PUBLIC_HOST}:${TIX_API_PUBLIC_PORT}/api
     command: ["./run.sh"]
 
   # Time
   rabbitmq:
     image: "rabbitmq:3.6.12-management-alpine"
-    env_file: rabbitmq_secret.env
+    env_file: 
+      - rabbitmq_secret.env
     environment:
-      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
-      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST}
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
     expose:
       - "5672"
     volumes:
@@ -53,9 +55,12 @@ services:
     env_file:
       - rabbitmq_secret.env
     environment:
-      - TIX__ENVIRONMENT=stage
-      - TIX__LOG_LEVEL=INFO
-      - TIX__QUEUE__HOST=${TIX_RABBITMQ_HOST}
+      TIX__WORKER_THREADS_QUANTITY: 16
+      TIX__QUEUE__HOST: ${TIX_RABBITMQ_HOST}
+      TIX__QUEUE__NAME: ${TIX_SERVER_CONDENSER_QUEUE}
+      TIX__LOG_LEVEL: ${LOG_LEVEL}
+      TIX__UDP_PORT: 4500
+      TIX__HTTP_PORT: 8080
     ports:
       - "4500:4500/udp"
       - "127.0.0.1:18080:8080"
@@ -68,11 +73,11 @@ services:
     env_file:
       - rabbitmq_secret.env
     environment:
-      - SPRING_PROFILES_ACTIVE=staging
-      - SPRING_RABBITMQ_HOST=${TIX_RABBITMQ_HOST}
-      - TIX_CONDENSER_TIX_API_HTTPS=${TIX_API_INTERNAL_SSL}
-      - TIX_CONDENSER_TIX_API_HOST=${TIX_API_INTERNAL_HOST}
-      - TIX_CONDENSER_TIX_API_PORT=${TIX_API_INTERNAL_PORT}
+      SPRING_RABBITMQ_HOST: ${TIX_RABBITMQ_HOST}
+      TIX_CONDENSER_TIX_API_HTTPS: ${TIX_API_INTERNAL_SSL}
+      TIX_CONDENSER_TIX_API_HOST: ${TIX_API_INTERNAL_HOST}
+      TIX_CONDENSER_TIX_API_PORT: ${TIX_API_INTERNAL_PORT}
+      TIX_CONDENSER_QUEUES_RECEIVING_NAME: ${TIX_SERVER_CONDENSER_QUEUE}
     volumes:
       - reports-data:/tmp/reports
     links:
@@ -84,8 +89,8 @@ services:
     env_file:
       - rabbitmq_secret.env
     environment:
-      - PROCESSOR_TYPE=BEAT
-      - TIX_RABBITMQ_HOST=${TIX_RABBITMQ_HOST}
+      PROCESSOR_TYPE: BEAT
+      TIX_RABBITMQ_HOST: ${TIX_RABBITMQ_HOST}
     volumes:
       - celery-scheduler-data:/tmp/celerybeat-schedule.d
     links:
@@ -97,11 +102,12 @@ services:
     env_file:
       - rabbitmq_secret.env
     environment:
-      - PROCESSOR_TYPE=WORKER
-      - TIX_RABBITMQ_HOST=${TIX_RABBITMQ_HOST}
-      - TIX_API_SSL=${TIX_API_INTERNAL_SSL}
-      - TIX_API_HOST=${TIX_API_INTERNAL_HOST}
-      - TIX_API_PORT=${TIX_API_INTERNAL_PORT}
+      PROCESSOR_TYPE: WORKER
+      TIX_LOG_LEVEL: ${LOG_LEVEL}
+      TIX_RABBITMQ_HOST: ${TIX_RABBITMQ_HOST}
+      TIX_API_SSL: ${TIX_API_INTERNAL_SSL}
+      TIX_API_HOST: ${TIX_API_INTERNAL_HOST}
+      TIX_API_PORT: ${TIX_API_INTERNAL_PORT}
     volumes:
       - reports-data:/tmp/reports
       - celery-scheduler-data:/tmp/celerybeat-schedule.d
