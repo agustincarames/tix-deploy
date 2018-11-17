@@ -116,6 +116,8 @@ services:
       TIX_API_SSL: ${TIX_API_INTERNAL_SSL}
       TIX_API_HOST: ${TIX_API_INTERNAL_HOST}
       TIX_API_PORT: ${TIX_API_INTERNAL_PORT}
+    links:
+      - tix-api
     volumes:
       - reports-data:/tmp/reports
       - celery-scheduler-data:/tmp/celerybeat-schedule.d
