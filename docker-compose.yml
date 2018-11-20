@@ -69,6 +69,7 @@ services:
       TIX__LOG_LEVEL: ${LOG_LEVEL}
       TIX__UDP_PORT: 4500
       TIX__HTTP_PORT: 8080
+      TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
     ports:
       - "4500:4500/udp"
       - "127.0.0.1:18080:8080"
@@ -86,6 +87,7 @@ services:
       TIX_CONDENSER_TIX_API_HOST: ${TIX_API_INTERNAL_HOST}
       TIX_CONDENSER_TIX_API_PORT: ${TIX_API_INTERNAL_PORT}
       TIX_CONDENSER_QUEUES_RECEIVING_NAME: ${TIX_SERVER_CONDENSER_QUEUE}
+      TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
     volumes:
       - reports-data:/tmp/reports
     links:
@@ -99,6 +101,7 @@ services:
     environment:
       PROCESSOR_TYPE: BEAT
       TIX_RABBITMQ_HOST: ${TIX_RABBITMQ_HOST}
+      TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
     volumes:
       - celery-scheduler-data:/tmp/celerybeat-schedule.d
     links:
@@ -116,6 +119,7 @@ services:
       TIX_API_SSL: ${TIX_API_INTERNAL_SSL}
       TIX_API_HOST: ${TIX_API_INTERNAL_HOST}
       TIX_API_PORT: ${TIX_API_INTERNAL_PORT}
+      TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
     links:
       - tix-api
     volumes:
