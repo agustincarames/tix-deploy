@@ -31,21 +31,6 @@ CREATE TABLE location (
 	updated_at datetime NOT NULL
 ) DEFAULT CHARSET=utf8;
 
-CREATE TABLE measure (
-	id integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	usagePercentage double NOT NULL,
-	upUsage double NOT NULL,
-	downUsage double NOT NULL,
-	upQuality double NOT NULL,
-	downQuality double NOT NULL,
-	timestamp datetime NOT NULL,
-	location_id integer NOT NULL REFERENCES location(id),
-	provider_id integer NOT NULL REFERENCES provider(id),
-	user_id integer NOT NULL REFERENCES user(id),
-	created_at datetime NOT NULL,
-	updated_at datetime NOT NULL
-) DEFAULT CHARSET=utf8;
-
 CREATE TABLE location_provider (
 	id integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
 	location_id integer NOT NULL REFERENCES location(id),

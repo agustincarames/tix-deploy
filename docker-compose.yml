@@ -2,35 +2,50 @@ version: "3"
 
 services:
   # API
-  mysql:
+  mysql-users:
     image: mysql:5.7
-    env_file:
-      - mysql_secret.env
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${TIX_MYSQL_DATABASE}
+    env_file: mysql_secret_users.env
     volumes:
-      - mysql-data:/var/lib/mysql
-      - ./create-tables.sql:/docker-entrypoint-initdb.d/create-tables.sql
+      - mysql-data-users:/var/lib/mysql
+      - ./create-tables-users.sql:/docker-entrypoint-initdb.d/create-tables-users.sql
+    expose:
+      - "3306"
+    ports:
+      - "${TIX_API_MYSQL_USERS_PORT}:3306"
+
+  mysql-stats:
+    image: mysql:5.7
+    env_file: mysql_secret_stats.env
+    volumes:
+      - mysql-data-stats:/var/lib/mysql
+      - ./create-tables-stats.sql:/docker-entrypoint-initdb.d/create-tables-stats.sql
+    expose:
+      - "3306"
+    ports:
+      - "${TIX_API_MYSQL_STATS_PORT}:3306"
 
   tix-api:
     image: "${TIX_IMAGE_API}"
     environment:
       TIX_API_PUBLIC_URL: ${TIX_API_PUBLIC_HOST}
+      TIX_API_MYSQL_USERS_HOST: ${TIX_API_MYSQL_USERS_HOST}
+      TIX_API_MYSQL_STATS_HOST: ${TIX_API_MYSQL_STATS_HOST}
     ports:
       - "${TIX_API_PUBLIC_PORT}:3001/tcp"
     links:
-      - mysql
+      - mysql-users
+      - mysql-stats
+    command: ["./wait-for-it.sh", "mysql-users:3306", "--", "npm", "start"]
 
   tix-ip-to-as:
     image: "${TIX_IMAGE_IPTOAS}"
     env_file:
-      - mysql_secret.env
+      - mysql_secret_users.env
     environment:
       MYSQL_DATABASE: ${TIX_MYSQL_DATABASE}
       MYSQL_HOST: ${TIX_MYSQL_HOST}
     links:
-      - mysql
+      - mysql-users
     volumes:
       - iptoas-data:/root/iptoas/files
 
@@ -132,6 +147,7 @@ services:
 volumes:
   celery-scheduler-data:
   rabbitmq-data:
-  mysql-data:
+  mysql-data-stats:
+  mysql-data-users:
   iptoas-data:
   reports-data:
