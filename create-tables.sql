@@ -11,7 +11,8 @@ CREATE TABLE user (
 	role varchar(255) NOT NULL,
 	recoveryToken varchar(255),
 	created_at datetime NOT NULL,
-	updated_at datetime NOT NULL
+	updated_at datetime NOT NULL,
+	measures_count int NOT NULL DEFAULT 0
 ) DEFAULT CHARSET=utf8;
 
 CREATE TABLE provider (
@@ -33,7 +34,7 @@ CREATE TABLE location (
 
 CREATE TABLE measure (
 	id integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	usagePercentage double NOT NULL,
+	usagePercentage double NULL DEFAULT NULL,
 	upUsage double NOT NULL,
 	downUsage double NOT NULL,
 	upQuality double NOT NULL,
