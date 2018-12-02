@@ -4,7 +4,7 @@ ALTER DATABASE CHARACTER SET utf8;
 
 CREATE TABLE measure (
 	id integer AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	usagePercentage double NOT NULL,
+	usagePercentage double NULL DEFAULT NULL,
 	upUsage double NOT NULL,
 	downUsage double NOT NULL,
 	upQuality double NOT NULL,
