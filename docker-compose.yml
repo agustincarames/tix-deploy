@@ -102,50 +102,34 @@ services:
       TIX_CONDENSER_TIX_API_HOST: ${TIX_API_INTERNAL_HOST}
       TIX_CONDENSER_TIX_API_PORT: ${TIX_API_INTERNAL_PORT}
       TIX_CONDENSER_QUEUES_RECEIVING_NAME: ${TIX_SERVER_CONDENSER_QUEUE}
+      TIX_CONDENSER_QUEUES_SENDING_NAME: ${TIX_CONDENSER_PROCESSOR_QUEUE}
       TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
     volumes:
       - reports-data:/tmp/reports
-    links:
-      - rabbitmq
-    command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
-
-  tix-time-processor-beat:
-    image: "${TIX_IMAGE_TIME_PROCESSOR}"
-    env_file:
-      - rabbitmq_secret.env
-    environment:
-      PROCESSOR_TYPE: BEAT
-      TIX_RABBITMQ_HOST: ${TIX_RABBITMQ_HOST}
-      TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
-    volumes:
-      - celery-scheduler-data:/tmp/celerybeat-schedule.d
-    links:
+    depends_on:
       - rabbitmq
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
     
-  tix-time-processor-worker:
+  tix-time-processor:
     image: "${TIX_IMAGE_TIME_PROCESSOR}"
     env_file:
       - rabbitmq_secret.env
     environment:
-      PROCESSOR_TYPE: WORKER
-      TIX_LOG_LEVEL: ${LOG_LEVEL}
+      LOGGING_LEVEL_ORG_SLF4J: ${LOG_LEVEL}
       TIX_RABBITMQ_HOST: ${TIX_RABBITMQ_HOST}
       TIX_API_SSL: ${TIX_API_INTERNAL_SSL}
       TIX_API_HOST: ${TIX_API_INTERNAL_HOST}
       TIX_API_PORT: ${TIX_API_INTERNAL_PORT}
+      TIX_CONDENSER_PROCESSOR_QUEUE: ${TIX_CONDENSER_PROCESSOR_QUEUE}
       TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
     links:
       - tix-api
+      - rabbitmq
     volumes:
       - reports-data:/tmp/reports
-      - celery-scheduler-data:/tmp/celerybeat-schedule.d
-    links:
-      - rabbitmq
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
 
 volumes:
-  celery-scheduler-data:
   rabbitmq-data:
   mysql-data-stats:
   mysql-data-users:
