@@ -3,22 +3,20 @@ version: "3"
 services:
   # API
   mysql-users:
-    image: mysql:5.7
+    image: ${TIX_USER_DB}
     env_file: mysql_secret_users.env
     volumes:
       - mysql-data-users:/var/lib/mysql
-      - ./create-tables-users.sql:/docker-entrypoint-initdb.d/create-tables-users.sql
     expose:
       - "3306"
     ports:
       - "${TIX_API_MYSQL_USERS_PORT}:3306"
 
   mysql-stats:
-    image: mysql:5.7
+    image: ${TIX_STAT_DB}
     env_file: mysql_secret_stats.env
     volumes:
       - mysql-data-stats:/var/lib/mysql
-      - ./create-tables-stats.sql:/docker-entrypoint-initdb.d/create-tables-stats.sql
     expose:
       - "3306"
     ports:
