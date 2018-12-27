@@ -11,6 +11,11 @@ services:
       - "3306"
     ports:
       - "${TIX_API_MYSQL_USERS_PORT}:3306"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.userdb==true
 
   mysql-stats:
     image: ${TIX_STAT_DB}
@@ -21,6 +26,11 @@ services:
       - "3306"
     ports:
       - "${TIX_API_MYSQL_STATS_PORT}:3306"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.statdb==true
 
   tix-api:
     image: "${TIX_IMAGE_API}"
@@ -30,7 +40,7 @@ services:
       TIX_API_MYSQL_STATS_HOST: ${TIX_API_MYSQL_STATS_HOST}
     ports:
       - "${TIX_API_PUBLIC_PORT}:3001/tcp"
-    links:
+    depends_on:
       - mysql-users
       - mysql-stats
     command: ["./wait-for-it.sh", "mysql-users:3306", "--", "npm", "start"]
@@ -42,10 +52,12 @@ services:
     environment:
       MYSQL_DATABASE: ${TIX_MYSQL_DATABASE}
       MYSQL_HOST: ${TIX_MYSQL_HOST}
-    links:
+    depends_on:
       - mysql-users
     volumes:
       - iptoas-data:/root/iptoas/files
+    deploy:
+      replicas: 0
 
   # Web
   tix-web:
@@ -70,6 +82,11 @@ services:
       - "5672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.rabbit==true
 
   tix-time-server:
     image: "${TIX_IMAGE_TIME_SERVER}"
@@ -85,8 +102,8 @@ services:
       TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
     ports:
       - "4500:4500/udp"
-      - "127.0.0.1:18080:8080"
-    links:
+      - "18080:8080"
+    depends_on:
       - rabbitmq
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
 
@@ -107,6 +124,11 @@ services:
     depends_on:
       - rabbitmq
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.condenser==true
     
   tix-time-processor:
     image: "${TIX_IMAGE_TIME_PROCESSOR}"
@@ -120,12 +142,12 @@ services:
       TIX_API_PORT: ${TIX_API_INTERNAL_PORT}
       TIX_CONDENSER_PROCESSOR_QUEUE: ${TIX_CONDENSER_PROCESSOR_QUEUE}
       TIMEOUT: ${TIX_RABBITMQ_TIMEOUT}
-    links:
+    depends_on:
       - tix-api
       - rabbitmq
-    volumes:
-      - reports-data:/tmp/reports
     command: ["./wait-for-it.sh", "rabbitmq:5672", "-s", "--", "./run.sh"]
+    deploy:
+      replicas: 5
 
 volumes:
   rabbitmq-data:
