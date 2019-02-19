@@ -63,7 +63,7 @@ services:
   tix-web:
     image: "${TIX_IMAGE_WEB}"
     ports:
-      - "${TIX_WEB_PUBLIC_PORT}:3000/tcp"
+      - "${TIX_WEB_PUBLIC_PORT}:${TIX_WEB_PUBLIC_PORT}/tcp"
     environment:
       TIX_WEB_HOST: ${TIX_WEB_PUBLIC_HOST}
       TIX_WEB_PORT: ${TIX_WEB_PUBLIC_PORT}
